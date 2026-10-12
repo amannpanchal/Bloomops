@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+.pytest_cache
+mlruns
+mlartifacts
+models
+logs
+.env
+*.db
+*.sqlite*
+

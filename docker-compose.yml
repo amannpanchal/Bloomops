@@ -1,0 +1,54 @@
+name: bloomops
+
+services:
+  api:
+    build: .
+    container_name: bloomops-api
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_PATH: models/model.joblib
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      ENABLE_ELASTICSEARCH_LOGGING: "true"
+      ELASTICSEARCH_HOST: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX: bloomops-predictions
+    volumes:
+      - ./models:/app/models
+    depends_on:
+      - mlflow
+      - elasticsearch
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    container_name: bloomops-mlflow
+    command: mlflow ui --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: bloomops-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.0
+    container_name: bloomops-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  elasticsearch-data:
